@@ -1,14 +1,20 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import reportWebVitals from './reportWebVitals';
-import { App } from './App';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import reportWebVitals from "./reportWebVitals";
+import { App } from "./App";
+import { UIProvider } from "@yamada-ui/react";
+import { GameProvider } from "./providers/GameProvider";
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <UIProvider>
+      <GameProvider>
+        <App />
+      </GameProvider>
+    </UIProvider>
   </React.StrictMode>
 );
 
