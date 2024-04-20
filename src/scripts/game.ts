@@ -1,5 +1,6 @@
-import { GAME_FPS } from "../define";
+import Decimal from "break_infinity.js";
 import { GameData } from "../types/game";
+import { Module, ModuleType } from "../types/factory";
 
 export class Game {
   gameData: GameData;
@@ -12,7 +13,7 @@ export class Game {
 
   tick() {
     this.tickCount++;
-    if (this.tickCount % GAME_FPS === 0) {
+    if (this.tickCount % 10 === 0) {
       this.updateElapsedTime();
     }
   }
@@ -24,10 +25,31 @@ export class Game {
   }
 }
 
-const initialGameData = (): GameData => {
+export const initialGameData = (): GameData => {
   return {
-    resources: {},
-    modules: [],
+    resources: { Rock: new Decimal(0) },
+    modules: new Map<string, Module>([
+      [
+        "0",
+        {
+          id: "0",
+          moduleType: ModuleType.RockGenerator,
+          input: [],
+          output: [null],
+          position: null,
+        },
+      ],
+      [
+        "1",
+        {
+          id: "1",
+          moduleType: ModuleType.RockReceiver,
+          input: [null],
+          output: [],
+          position: null,
+        },
+      ],
+    ]),
     achievementsUnlocked: [],
     elapsedTime: 0,
   };

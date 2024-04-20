@@ -7,15 +7,12 @@ import {
   useState,
 } from "react";
 import { GAME_INTERVAL } from "../define";
-import { Game } from "../scripts/game";
-import { ResourceType } from "../types/factory";
-import Decimal from "break_infinity.js";
+import { Game, initialGameData } from "../scripts/game";
 import { GameData } from "../types/game";
 
-type GameManager = Readonly<{
-  resources: { [key in ResourceType]: Decimal };
-  elapsedTime: number;
-}>;
+type GameManager = {
+  readonly gameData: GameData;
+};
 
 const gameContext = createContext<GameManager | undefined>(undefined);
 
@@ -25,20 +22,25 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
   // ゲームクラス管理
   const gameRef = useRef<Game>(new Game());
   const clearGameLoopRef = useRef<ReturnType<typeof setTimeout>>();
-  
+
   // ループ管理
   const startTime = useRef<number>(0);
   const tickCount = useRef<number>(0);
 
   // ゲーム内情報
-  const [resources, setResources] = useState<{
-    [key in ResourceType]: Decimal;
-  }>({}); // TODO 初期値
-  const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [gameData, setGameData] = useState<GameData>(initialGameData());
 
   useEffect(() => {
     if (clearGameLoopRef.current === undefined) {
+      document.onvisibilitychange = () => {
+        // タブの表示切り替えがあるとfps固定用の値をリセット
+        // これが無いとタブ非表示で放置したとき
+        // ページ読み込みからの時間当たりtick量を守ろうとして超高速tickする
+        startTime.current = Date.now();
+        tickCount.current = 0;
+      };
       startTime.current = Date.now();
+      tickCount.current = 0;
       gameLoop();
     }
   }, []);
@@ -46,9 +48,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
   const gameLoop = () => {
     const game = gameRef.current;
     game.tick();
-    setGameData(game.gameData);
+    setGameData({ ...game.gameData });
 
     // 次のtickをセットする
+    // startTimeからの時間当たりtick量を守る
     tickCount.current++;
     clearGameLoopRef.current = setTimeout(
       gameLoop,
@@ -56,12 +59,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  const setGameData = (gameData: GameData) => {
-    setResources(gameData.resources);
-    setElapsedTime(gameData.elapsedTime);
-  };
-
-  const value: GameManager = { resources: resources, elapsedTime: elapsedTime };
+  const value: GameManager = { gameData: gameData! };
 
   return <gameContext.Provider value={value}>{children}</gameContext.Provider>;
 };
