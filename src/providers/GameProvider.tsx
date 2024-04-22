@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { GAME_INTERVAL } from "../define";
-import { Game, initialGameData } from "../scripts/game";
+import { Game } from "../scripts/game";
 import { GameData } from "../types/game";
 
 type GameManager = {
@@ -27,8 +27,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
   const startTime = useRef<number>(0);
   const tickCount = useRef<number>(0);
 
-  // ゲーム内情報
-  const [gameData, setGameData] = useState<GameData>(initialGameData());
+  // 再レンダリング用
+  const [_, setTrigger] = useState<boolean>(false);
 
   useEffect(() => {
     if (clearGameLoopRef.current === undefined) {
@@ -46,9 +46,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const gameLoop = () => {
-    const game = gameRef.current;
+    const game = gameRef.current!;
     game.tick();
-    setGameData({ ...game.gameData });
+    reRender();
 
     // 次のtickをセットする
     // startTimeからの時間当たりtick量を守る
@@ -59,7 +59,14 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  const value: GameManager = { gameData: gameData! };
+  // 強制再レンダリング
+  const reRender = () => {
+    setTrigger((trigger) => !trigger);
+  };
+
+  const value: GameManager = {
+    gameData: gameRef.current.gameData,
+  };
 
   return <gameContext.Provider value={value}>{children}</gameContext.Provider>;
 };
