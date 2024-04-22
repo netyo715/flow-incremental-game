@@ -4,8 +4,10 @@ import { Module, ModuleType } from "../types/factory";
 
 export class Game {
   gameData: GameData;
+
   prevTime: number;
   tickCount: number = 0;
+
   constructor(gameData?: GameData) {
     this.prevTime = Date.now();
     this.gameData = gameData ? gameData : initialGameData();
@@ -13,15 +15,7 @@ export class Game {
 
   tick() {
     this.tickCount++;
-    if (this.tickCount % 10 === 0) {
-      this.updateElapsedTime();
-    }
-  }
-
-  updateElapsedTime() {
-    const now = Date.now();
-    this.gameData.elapsedTime += now - this.prevTime;
-    this.prevTime = now;
+    this.gameData.elapsedTime += GAME_INTERVAL;
   }
 }
 
