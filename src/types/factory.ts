@@ -1,31 +1,34 @@
 import Decimal from "break_infinity.js";
+import { Game } from "../scripts/game";
 
 export const ResourceType = {
   Rock: "Rock",
-} as const;
+};
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];
 
-export const ModuleResourceType = {
+export const IOResourceType = {
   Any: "Any",
   Rock: "Rock",
 };
-export type ModuleResourceType =
-  (typeof ModuleResourceType)[keyof typeof ModuleResourceType];
+export type IOResourceType =
+  (typeof IOResourceType)[keyof typeof IOResourceType];
 
 export const ModuleType = {
   RockGenerator: "RockGenerator",
   RockReceiver: "RockReceiver",
-} as const;
+};
 export type ModuleType = (typeof ModuleType)[keyof typeof ModuleType];
 
-export type Module = {
+export interface Module {
+  game: Game;
   id: string;
   name: string;
   moduleType: ModuleType;
-  inputs: ModuleIO[];
-  outputs: ModuleIO[];
+  inputs: ModuleInput[];
+  outputs: ModuleOutput[];
+  action: () => void;
   position?: { x: number; y: number };
-};
+}
 
 export type ModuleIO = {
   resourceType: ResourceType;
@@ -34,6 +37,7 @@ export type ModuleIO = {
     moduleId: string;
     index: number;
   };
-  nextAmount?: Decimal;
-  amount?: Decimal;
 };
+
+export type ModuleInput = ModuleIO & { nextAmount: Decimal; amount: Decimal };
+export type ModuleOutput = ModuleIO;

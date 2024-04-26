@@ -1,29 +1,37 @@
 import Decimal from "break_infinity.js";
 import { GameData, GameOperation } from "../types/game";
-import {
-  Module,
-  ModuleResourceType,
-  ModuleType,
-  ResourceType,
-} from "../types/factory";
+import { Module, IOResourceType, ResourceType } from "../types/factory";
 import { GAME_INTERVAL } from "../define";
+import { RockGenerator, RockReceiver } from "./parameters/modules";
 
 export class Game {
   gameData: GameData;
   operationQueue: GameOperation[] = [];
 
   constructor(gameData?: GameData) {
-    this.gameData = gameData ? gameData : initialGameData();
+    this.gameData = gameData ? gameData : initialGameData(this);
   }
 
   tick() {
     this.applyOperation();
-    // TODO 施設の処理
+    this.modulesAction();
     // TODO 実績などの処理
 
     /* 固定FPSなのでかなり正確な計測ができるが、
     このクラスの中で固定FPSなのを保証していないのでなんとなく微妙だ */
     this.gameData.elapsedTime += GAME_INTERVAL;
+  }
+
+  modulesAction() {
+    Array.from(this.gameData.modules.entries()).forEach(([_, module]) => {
+      module.action();
+    });
+    Array.from(this.gameData.modules.entries()).forEach(([_, module]) => {
+      module.inputs.forEach((input) => {
+        input.amount = input.nextAmount;
+        input.nextAmount = new Decimal(0);
+      });
+    });
   }
 
   applyOperation() {
@@ -101,6 +109,14 @@ export class Game {
       return;
     }
   }
+
+  generateId() {
+    for (let i = 0; true; i++) {
+      if (!this.gameData.modules.has(i.toString())) {
+        return i.toString();
+      }
+    }
+  }
 }
 
 export const isConnectable = (
@@ -108,48 +124,20 @@ export const isConnectable = (
   resourceTypeB: ResourceType
 ) => {
   if (
-    resourceTypeA === ModuleResourceType.Any ||
-    resourceTypeB === ModuleResourceType.Any
+    resourceTypeA === IOResourceType.Any ||
+    resourceTypeB === IOResourceType.Any
   ) {
     return true;
   }
   return resourceTypeA === resourceTypeB;
 };
 
-export const initialGameData = (): GameData => {
+export const initialGameData = (game: Game): GameData => {
   return {
     resources: { Rock: new Decimal(0) },
     modules: new Map<string, Module>([
-      [
-        "0",
-        {
-          id: "0",
-          name: "生産器(石)",
-          moduleType: ModuleType.RockGenerator,
-          inputs: [],
-          outputs: [
-            {
-              resourceType: ResourceType.Rock,
-              maxAmount: new Decimal(10),
-            },
-          ],
-        },
-      ],
-      [
-        "1",
-        {
-          id: "1",
-          name: "回収器(石)",
-          moduleType: ModuleType.RockReceiver,
-          inputs: [
-            {
-              resourceType: ResourceType.Rock,
-              maxAmount: new Decimal(10),
-            },
-          ],
-          outputs: [],
-        },
-      ],
+      ["0", new RockGenerator("0", game)],
+      ["1", new RockReceiver("1", game)],
     ]),
     achievementsUnlocked: [],
     elapsedTime: 0,

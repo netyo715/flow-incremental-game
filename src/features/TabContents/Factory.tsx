@@ -1,7 +1,6 @@
 import { Divider, HStack, VStack, Text, Button } from "@yamada-ui/react";
 import { useState } from "react";
 import { useGame } from "../../providers/GameProvider";
-import { moduleInfo } from "../../scripts/parameters/modules";
 import { GameData } from "../../types/game";
 
 export const Factory: React.FC = () => {
@@ -31,17 +30,35 @@ const ModuleList: React.FC<ModuleListProp> = ({
   setSelectedModuleId,
 }) => {
   const { connectModule, disconnectModule } = useGame();
-  const selectedModule = selectedModuleId
-    ? gameData.modules.get(selectedModuleId)
-    : undefined;
+  const selectedModule =
+    selectedModuleId === undefined
+      ? selectedModuleId
+      : gameData.modules.get(selectedModuleId);
   return (
     <VStack h="100%" minW="200px" maxW="25%">
+      <Button
+        onClick={() =>
+          connectModule(
+            { moduleId: "1", index: 0 },
+            { moduleId: "0", index: 0 }
+          )
+        }
+      >
+        接続
+      </Button>
+      <Button
+        onClick={() => {
+          disconnectModule({ moduleId: "1", index: 0 });
+        }}
+      >
+        切断
+      </Button>
       {selectedModule === undefined ? (
         <>
           {Array.from(gameData.modules.entries()).map(([moduleId, module]) => {
             return (
               <VStack
-                key={moduleId}
+                key={"M" + moduleId}
                 onClick={() => setSelectedModuleId(moduleId)}
                 cursor="pointer"
               >
@@ -53,11 +70,11 @@ const ModuleList: React.FC<ModuleListProp> = ({
       ) : (
         <>
           <Button onClick={() => setSelectedModuleId(undefined)}>閉じる</Button>
-          <Text>{moduleInfo[selectedModule.moduleType].name}</Text>
+          <Text>{selectedModule.name}</Text>
           <Text>入力</Text>
-          {selectedModule.inputs.map((input) => {
+          {selectedModule.inputs.map((input, index) => {
             return input.connectedModuleIO ? (
-              <Text>
+              <Text key={"I" + index}>
                 {gameData.modules.get(input.connectedModuleIO.moduleId)!.name}
               </Text>
             ) : (
@@ -65,9 +82,9 @@ const ModuleList: React.FC<ModuleListProp> = ({
             );
           })}
           <Text>出力</Text>
-          {selectedModule.outputs.map((output) => {
+          {selectedModule.outputs.map((output, index) => {
             return output.connectedModuleIO ? (
-              <Text>
+              <Text key={"O" + index}>
                 {gameData.modules.get(output.connectedModuleIO.moduleId)!.name}
               </Text>
             ) : (

@@ -1,51 +1,68 @@
 import Decimal from "break_infinity.js";
 import {
-  ModuleResourceType,
+  Module,
+  ModuleInput,
+  ModuleOutput,
   ModuleType,
   ResourceType,
 } from "../../types/factory";
 import { Game } from "../game";
 
-// TODO 詳細
-export const moduleInfo: ModuleInfo = {
-  RockGenerator: {
-    name: "生産器(石)",
-    input: [],
-    output: [
-      { resourceType: ModuleResourceType.Rock, amountLimit: new Decimal(1) },
-    ],
-    action: () => {
-      return [
-        { resourceType: ModuleResourceType.Rock, amount: new Decimal(1) },
-      ];
+export class RockGenerator implements Module {
+  id: string;
+  name: string = moduleNames[ModuleType.RockGenerator];
+  moduleType: ModuleType = ModuleType.RockGenerator;
+  inputs: ModuleInput[] = [];
+  outputs: ModuleOutput[] = [
+    {
+      resourceType: ResourceType.Rock,
+      maxAmount: new Decimal(1),
     },
-  },
-  RockReceiver: {
-    name: "回収器(石)",
-    input: [
-      { resourceType: ModuleResourceType.Rock, amountLimit: new Decimal(1) },
-    ],
-    output: [],
-    action: (game, inputs) => {
-      game.gameData.resources[ResourceType.Rock].add(inputs[0].amount);
-      return [];
+  ];
+  game: Game;
+  constructor(id: string, game: Game) {
+    this.id = id;
+    this.game = game;
+  }
+  action() {
+    if (this.outputs[0].connectedModuleIO) {
+      const outputModule = this.game.gameData.modules.get(
+        this.outputs[0].connectedModuleIO.moduleId
+      )!;
+      outputModule.inputs[0].nextAmount =
+        outputModule.inputs[0].nextAmount.add(1);
+    }
+  }
+}
+
+export class RockReceiver implements Module {
+  id: string;
+  name = moduleNames[ModuleType.RockReceiver];
+  moduleType: ModuleType = ModuleType.RockReceiver;
+  inputs: ModuleInput[] = [
+    {
+      resourceType: ResourceType.Rock,
+      maxAmount: new Decimal(11),
+      amount: new Decimal(0),
+      nextAmount: new Decimal(0),
     },
-  },
-};
-export type ModuleInfo = {
-  [key in ModuleType]: {
-    name: string;
-    input: {
-      resourceType: ModuleResourceType;
-      amountLimit: Decimal;
-    }[];
-    output: {
-      resourceType: ModuleResourceType;
-      amountLimit: Decimal;
-    }[];
-    action: (
-      game: Game,
-      inputs: { resourceType: ModuleResourceType; amount: Decimal }[]
-    ) => { resourceType: ModuleResourceType; amount: Decimal }[];
-  };
+  ];
+  outputs: ModuleOutput[] = [];
+  game: Game;
+  constructor(id: string, game: Game) {
+    this.id = id;
+    this.game = game;
+  }
+  action() {
+    if (this.inputs[0].connectedModuleIO) {
+      this.game.gameData.resources.Rock = this.game.gameData.resources.Rock.add(
+        this.inputs[0].amount
+      );
+    }
+  }
+}
+
+export const moduleNames: Record<ModuleType, string> = {
+  RockGenerator: "生産器(石)",
+  RockReceiver: "回収器(石)",
 };
