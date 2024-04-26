@@ -12,6 +12,26 @@ import { GameData } from "../types/game";
 
 type GameManager = {
   readonly gameData: GameData;
+  connectModule: (
+    input: {
+      moduleId: string;
+      index: number;
+    },
+    output: {
+      moduleId: string;
+      index: number;
+    }
+  ) => void;
+  disconnectModule: (
+    input?: {
+      moduleId: string;
+      index: number;
+    },
+    output?: {
+      moduleId: string;
+      index: number;
+    }
+  ) => void;
 };
 
 const gameContext = createContext<GameManager | undefined>(undefined);
@@ -66,6 +86,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
 
   const value: GameManager = {
     gameData: gameRef.current.gameData,
+    connectModule: (input, output) => {
+      gameRef.current.connectModule(input, output);
+    },
+    disconnectModule: (input?, output?) => {
+      gameRef.current.disconnectModule(input, output);
+    },
   };
 
   return <gameContext.Provider value={value}>{children}</gameContext.Provider>;

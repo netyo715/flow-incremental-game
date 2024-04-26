@@ -7,3 +7,27 @@ export type GameData = {
   achievementsUnlocked: (0 | 1)[];
   elapsedTime: number;
 };
+
+export type GameOperation =
+  | {
+      type: "connectModule";
+      input: {
+        moduleId: string;
+        index: number;
+      };
+      output: {
+        moduleId: string;
+        index: number;
+      };
+    }
+  | {
+      type: "disconnectModule";
+      input?: {
+        moduleId: string;
+        index: number;
+      };
+      output?: {
+        moduleId: string;
+        index: number;
+      };
+    };

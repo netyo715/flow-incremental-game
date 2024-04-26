@@ -1,3 +1,5 @@
+import Decimal from "break_infinity.js";
+
 export const ResourceType = {
   Rock: "Rock",
 } as const;
@@ -18,8 +20,20 @@ export type ModuleType = (typeof ModuleType)[keyof typeof ModuleType];
 
 export type Module = {
   id: string;
+  name: string;
   moduleType: ModuleType;
-  input: ({ moduleId: string; index: number } | null)[];
-  output: ({ moduleId: string; index: number } | null)[];
-  position: { x: number; y: number } | null;
+  inputs: ModuleIO[];
+  outputs: ModuleIO[];
+  position?: { x: number; y: number };
+};
+
+export type ModuleIO = {
+  resourceType: ResourceType;
+  maxAmount: Decimal;
+  connectedModuleIO?: {
+    moduleId: string;
+    index: number;
+  };
+  nextAmount?: Decimal;
+  amount?: Decimal;
 };
