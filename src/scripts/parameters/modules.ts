@@ -5,6 +5,7 @@ import {
   ModuleInput,
   ModuleOutput,
   ModuleType,
+  ResourceType,
 } from "../../types/factory";
 
 export class RockGenerator extends Module {
@@ -35,9 +36,7 @@ export class RockReceiver extends Module {
   ];
   outputs: ModuleOutput[] = [];
   action() {
-    this.game.gameData.resources.Rock = this.game.gameData.resources.Rock.add(
-      this.inputs[0].amount
-    );
+    this.game.addResource(ResourceType.Rock, this.inputs[0].amount);
   }
 }
 

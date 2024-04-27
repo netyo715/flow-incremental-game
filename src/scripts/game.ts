@@ -1,4 +1,4 @@
-import Decimal from "break_infinity.js";
+import Decimal, { DecimalSource } from "break_infinity.js";
 import { GameData, GameOperation } from "../types/game";
 import { Module, IOResourceType, ResourceType } from "../types/factory";
 import { GAME_INTERVAL } from "../define";
@@ -114,6 +114,11 @@ export class Game {
     } else {
       return;
     }
+  }
+
+  addResource(resourceType: ResourceType, amount: DecimalSource) {
+    this.gameData.resources[resourceType] =
+      this.gameData.resources[resourceType].add(amount);
   }
 
   generateId() {
