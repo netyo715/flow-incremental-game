@@ -19,20 +19,43 @@ export const ModuleType = {
 };
 export type ModuleType = (typeof ModuleType)[keyof typeof ModuleType];
 
-export interface Module {
+export abstract class Module {
   game: Game;
   id: string;
-  name: string;
-  moduleType: ModuleType;
-  inputs: ModuleInput[];
-  outputs: ModuleOutput[];
-  action: () => void;
+  abstract name: string;
+  abstract moduleType: ModuleType;
+  abstract inputs: ModuleInput[];
+  abstract outputs: ModuleOutput[];
+  abstract action(): void;
   position?: { x: number; y: number };
+
+  constructor(game: Game, id: string) {
+    this.game = game;
+    this.id = id;
+  }
+
+  level(): number {
+    return this.game.gameData.moduleLevels[this.moduleType];
+  }
+
+  outputResource(index: number, amount: Decimal) {
+    const outputIO = this.outputs[index].connectedModuleIO;
+    if (!outputIO) {
+      return;
+    }
+    const outputModule = this.game.gameData.modules.get(outputIO.moduleId);
+    if (!outputModule) {
+      return;
+    }
+    outputModule.inputs[outputIO.index].nextAmount = amount
+      .min(this.outputs[index].maxAmount())
+      .min(outputModule.inputs[outputIO.index].maxAmount());
+  }
 }
 
 export type ModuleIO = {
-  resourceType: ResourceType;
-  maxAmount: Decimal;
+  resourceType: IOResourceType;
+  maxAmount: () => Decimal;
   connectedModuleIO?: {
     moduleId: string;
     index: number;

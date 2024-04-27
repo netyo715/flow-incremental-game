@@ -75,6 +75,8 @@ export class Game {
     // 接続
     inputIO.connectedModuleIO = { ...output };
     outputIO.connectedModuleIO = { ...input };
+    // 資源量リセット
+    inputIO.amount = new Decimal(0);
   }
 
   disconnectModule(
@@ -93,6 +95,8 @@ export class Game {
       const outputModule = this.gameData.modules.get(inputIO.moduleId);
       inputModule.inputs[input.index].connectedModuleIO = undefined;
       outputModule!.outputs[inputIO.index].connectedModuleIO = undefined;
+      // 資源量リセット
+      inputModule.inputs[input.index].amount = new Decimal(0);
     } else if (output) {
       const outputModule = this.gameData.modules.get(output.moduleId);
       if (!outputModule) {
@@ -105,6 +109,8 @@ export class Game {
       const inputModule = this.gameData.modules.get(outputIO.moduleId);
       outputModule.outputs[output.index].connectedModuleIO = undefined;
       inputModule!.inputs[outputIO.index].connectedModuleIO = undefined;
+      // 資源量リセット
+      inputModule!.inputs[outputIO.index].amount = new Decimal(0);
     } else {
       return;
     }
@@ -136,9 +142,13 @@ export const initialGameData = (game: Game): GameData => {
   return {
     resources: { Rock: new Decimal(0) },
     modules: new Map<string, Module>([
-      ["0", new RockGenerator("0", game)],
-      ["1", new RockReceiver("1", game)],
+      ["0", new RockGenerator(game, "0")],
+      ["1", new RockReceiver(game, "1")],
     ]),
+    moduleLevels: {
+      RockGenerator: 0,
+      RockReceiver: 0,
+    },
     achievementsUnlocked: [],
     elapsedTime: 0,
   };
