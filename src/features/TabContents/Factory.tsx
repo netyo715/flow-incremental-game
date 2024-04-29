@@ -1,34 +1,34 @@
 import { Divider, HStack, VStack, Text, Button } from "@yamada-ui/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGame } from "../../providers/GameProvider";
-import { GameData } from "../../types/game";
+import { drawModuleView } from "../../scripts/moduleView";
 
 export const Factory: React.FC = () => {
-  const { gameData } = useGame();
   const [selectedModuleId, setSelectedModuleId] = useState<string>();
   return (
     <HStack h="100%" gap="0">
       <ModuleList
-        gameData={gameData}
         selectedModuleId={selectedModuleId}
         setSelectedModuleId={setSelectedModuleId}
       />
       <Divider orientation="vertical" />
-      <VStack></VStack>
+      <ModuleView
+        selectedModuleId={selectedModuleId}
+        setSelectedModuleId={setSelectedModuleId}
+      />
     </HStack>
   );
 };
 
-type ModuleListProp = {
-  gameData: GameData;
+type ModuleListProps = {
   selectedModuleId?: string;
   setSelectedModuleId: React.Dispatch<React.SetStateAction<string | undefined>>;
 };
-const ModuleList: React.FC<ModuleListProp> = ({
-  gameData,
+const ModuleList: React.FC<ModuleListProps> = ({
   selectedModuleId,
   setSelectedModuleId,
 }) => {
+  const { gameData } = useGame();
   const { connectModule, disconnectModule } = useGame();
   const selectedModule =
     selectedModuleId === undefined
@@ -93,6 +93,40 @@ const ModuleList: React.FC<ModuleListProp> = ({
           })}
         </>
       )}
+    </VStack>
+  );
+};
+
+type ModuleViewProps = {
+  selectedModuleId?: string;
+  setSelectedModuleId: React.Dispatch<React.SetStateAction<string | undefined>>;
+};
+const ModuleView: React.FC<ModuleViewProps> = ({
+  selectedModuleId,
+  setSelectedModuleId,
+}) => {
+  const { gameData } = useGame();
+  const canvasContextRef = useRef<CanvasRenderingContext2D>();
+
+  useEffect(() => {
+    if (!canvasContextRef.current) {
+      const canvas = document.getElementById("moduleView") as HTMLCanvasElement;
+      canvasContextRef.current = canvas.getContext(
+        "2d"
+      ) as CanvasRenderingContext2D;
+    }
+    const context = canvasContextRef.current;
+    drawModuleView(context, gameData.modules, selectedModuleId);
+  });
+
+  return (
+    <VStack h="100%" w="512px" minW="512px">
+      <canvas
+        id="moduleView"
+        width="512"
+        height="512"
+        style={{ background: "lightgray" }}
+      ></canvas>
     </VStack>
   );
 };
