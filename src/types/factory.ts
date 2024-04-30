@@ -8,6 +8,8 @@ export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];
 
 export const IOResourceType = {
   Any: "Any",
+  Unsettled: "Unsettled",
+  Disable: "Disable",
   Rock: "Rock",
 };
 export type IOResourceType =
@@ -16,6 +18,7 @@ export type IOResourceType =
 export const ModuleType = {
   RockGenerator: "RockGenerator",
   RockReceiver: "RockReceiver",
+  Splitter: "Splitter",
 };
 export type ModuleType = (typeof ModuleType)[keyof typeof ModuleType];
 
@@ -51,10 +54,13 @@ export abstract class Module {
       .min(this.outputs[index].maxAmount())
       .min(outputModule.inputs[outputIO.index].maxAmount());
   }
+
+  updateState() {}
 }
 
 export type ModuleIO = {
-  resourceType: IOResourceType;
+  connectableResourceType: () => IOResourceType;
+  resourceType: () => IOResourceType;
   maxAmount: () => Decimal;
   connectedModuleIO?: {
     moduleId: string;
