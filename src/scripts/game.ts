@@ -1,8 +1,8 @@
-import Decimal, { DecimalSource } from "break_infinity.js";
+import Decimal from "break_infinity.js";
 import { GameData, GameOperation } from "../types/game";
-import { Module, IOResourceType, ResourceType } from "../types/factory";
+import { Module } from "../types/factory";
 import { GAME_INTERVAL } from "../define";
-import { RockGenerator, RockReceiver, Splitter } from "./parameters/modules";
+import { RockGenerator, RockReceiver } from "./parameters/modules";
 
 export class Game {
   gameData: GameData;
@@ -27,10 +27,7 @@ export class Game {
       module.action();
     });
     Array.from(this.gameData.modules.entries()).forEach(([_, module]) => {
-      module.inputs.forEach((input) => {
-        input.amount = input.nextAmount;
-        input.nextAmount = new Decimal(0);
-      });
+      module.moveResources();
     });
   }
 
@@ -52,34 +49,9 @@ export class Game {
     input: { moduleId: string; index: number },
     output: { moduleId: string; index: number }
   ) {
-    if (input.moduleId === output.moduleId) {
-      return;
-    }
-    const inputModule = this.gameData.modules.get(input.moduleId);
-    const outputModule = this.gameData.modules.get(output.moduleId);
-    // モジュール存在チェック
-    if (!inputModule || !outputModule) {
-      return;
-    }
-    const inputIO = inputModule.inputs[input.index];
-    const outputIO = outputModule.outputs[output.index];
-    // 接続可能かチェック
-    isConnectable(inputIO.resourceType(), outputIO.resourceType());
-    // 接続済みモジュールを切断
-    if (inputIO.connectedModuleIO) {
-      this.disconnectModule(input);
-    }
-    if (outputIO.connectedModuleIO) {
-      this.disconnectModule(undefined, output);
-    }
-    // 接続
-    inputIO.connectedModuleIO = { ...output };
-    outputIO.connectedModuleIO = { ...input };
-    // 資源量リセット
-    inputIO.amount = new Decimal(0);
-    // 状態更新
-    inputModule.updateState();
-    outputModule.updateState();
+    this.gameData.modules
+      .get(input.moduleId)
+      ?.connectInput(input.index, output);
   }
 
   disconnectModule(
@@ -87,47 +59,13 @@ export class Game {
     output?: { moduleId: string; index: number }
   ) {
     if (input) {
-      const inputModule = this.gameData.modules.get(input.moduleId);
-      if (!inputModule) {
-        return;
-      }
-      const inputIO = inputModule.inputs[input.index].connectedModuleIO;
-      if (!inputIO) {
-        return;
-      }
-      const outputModule = this.gameData.modules.get(inputIO.moduleId)!;
-      inputModule.inputs[input.index].connectedModuleIO = undefined;
-      outputModule.outputs[inputIO.index].connectedModuleIO = undefined;
-      // 資源量リセット
-      inputModule.inputs[input.index].amount = new Decimal(0);
-      // 状態更新
-      inputModule.updateState();
-      outputModule.updateState();
-    } else if (output) {
-      const outputModule = this.gameData.modules.get(output.moduleId);
-      if (!outputModule) {
-        return;
-      }
-      const outputIO = outputModule.outputs[output.index].connectedModuleIO;
-      if (!outputIO) {
-        return;
-      }
-      const inputModule = this.gameData.modules.get(outputIO.moduleId)!;
-      outputModule.outputs[output.index].connectedModuleIO = undefined;
-      inputModule.inputs[outputIO.index].connectedModuleIO = undefined;
-      // 資源量リセット
-      inputModule.inputs[outputIO.index].amount = new Decimal(0);
-      // 状態更新
-      inputModule.updateState();
-      outputModule.updateState();
-    } else {
-      return;
+      this.gameData.modules.get(input.moduleId)?.disconnectInput(input.index);
     }
-  }
-
-  addResource(resourceType: ResourceType, amount: DecimalSource) {
-    this.gameData.resources[resourceType] =
-      this.gameData.resources[resourceType].add(amount);
+    if (output) {
+      this.gameData.modules
+        .get(output.moduleId)
+        ?.disconnectOutput(output.index);
+    }
   }
 
   generateId() {
@@ -138,25 +76,6 @@ export class Game {
     }
   }
 }
-
-export const isConnectable = (
-  resourceTypeA: ResourceType,
-  resourceTypeB: ResourceType
-) => {
-  if (
-    resourceTypeA === IOResourceType.Disable ||
-    resourceTypeB === IOResourceType.Disable
-  ) {
-    return false;
-  }
-  if (
-    resourceTypeA === IOResourceType.Any ||
-    resourceTypeB === IOResourceType.Any
-  ) {
-    return true;
-  }
-  return resourceTypeA === resourceTypeB;
-};
 
 export const initialGameData = (game: Game): GameData => {
   return {

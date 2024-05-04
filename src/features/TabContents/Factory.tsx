@@ -73,9 +73,9 @@ const ModuleList: React.FC<ModuleListProps> = ({
           <Text>{selectedModule.name}</Text>
           <Text>入力</Text>
           {selectedModule.inputs.map((input, index) => {
-            return input.connectedModuleIO ? (
+            return input ? (
               <Text key={"I" + index}>
-                {gameData.modules.get(input.connectedModuleIO.moduleId)!.name}
+                {gameData.modules.get(input.moduleId)!.name}
               </Text>
             ) : (
               <Text>接続先なし</Text>
@@ -83,9 +83,9 @@ const ModuleList: React.FC<ModuleListProps> = ({
           })}
           <Text>出力</Text>
           {selectedModule.outputs.map((output, index) => {
-            return output.connectedModuleIO ? (
+            return output ? (
               <Text key={"O" + index}>
-                {gameData.modules.get(output.connectedModuleIO.moduleId)!.name}
+                {gameData.modules.get(output.moduleId)!.name}
               </Text>
             ) : (
               <Text>接続先なし</Text>

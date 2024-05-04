@@ -7,16 +7,16 @@ export const drawModuleView = (
 ) => {
   context.clearRect(0, 0, 512, 512);
   // 接続の描画
-  Array.from(modules.entries()).forEach(([moduleId, module]) => {
+  Array.from(modules.entries()).forEach(([_, module]) => {
     if (!module.position) {
       return;
     }
     const inputPosition = module.position;
     module.inputs.forEach((input) => {
-      if (!input.connectedModuleIO) {
+      if (!input) {
         return;
       }
-      const outputModule = modules.get(input.connectedModuleIO.moduleId);
+      const outputModule = modules.get(input.moduleId);
       if (!outputModule) {
         return;
       }

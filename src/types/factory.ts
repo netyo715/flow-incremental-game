@@ -1,4 +1,4 @@
-import Decimal from "break_infinity.js";
+import Decimal, { DecimalSource } from "break_infinity.js";
 import { Game } from "../scripts/game";
 
 export const ResourceType = {
@@ -7,9 +7,6 @@ export const ResourceType = {
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];
 
 export const IOResourceType = {
-  Any: "Any",
-  Unsettled: "Unsettled",
-  Disable: "Disable",
   Rock: "Rock",
 };
 export type IOResourceType =
@@ -25,24 +22,34 @@ export type ModuleType = (typeof ModuleType)[keyof typeof ModuleType];
 export abstract class Module {
   game: Game;
   id: string;
+  inputs: ModuleIO[];
+  outputs: ModuleIO[];
+  resources = new Map<IOResourceType, Decimal>();
+  nextResources = new Map<IOResourceType, Decimal>();
+  position?: { x: number; y: number };
   abstract name: string;
   abstract moduleType: ModuleType;
-  abstract inputs: ModuleInput[];
-  abstract outputs: ModuleOutput[];
   abstract action(): void;
-  position?: { x: number; y: number };
 
-  constructor(game: Game, id: string) {
+  constructor(game: Game, id: string, inputCount: number, outputCount: number) {
     this.game = game;
     this.id = id;
+    this.inputs = [];
+    this.outputs = [];
+    for (let i = 0; i < inputCount; i++) {
+      this.inputs.push(undefined);
+    }
+    for (let i = 0; i < outputCount; i++) {
+      this.outputs.push(undefined);
+    }
   }
 
   level(): number {
     return this.game.gameData.moduleLevels[this.moduleType];
   }
 
-  outputResource(index: number, amount: Decimal) {
-    const outputIO = this.outputs[index].connectedModuleIO;
+  outputResource(index: number, resourceType: IOResourceType, amount: Decimal) {
+    const outputIO = this.outputs[index];
     if (!outputIO) {
       return;
     }
@@ -50,23 +57,60 @@ export abstract class Module {
     if (!outputModule) {
       return;
     }
-    outputModule.inputs[outputIO.index].nextAmount = amount
-      .min(this.outputs[index].maxAmount())
-      .min(outputModule.inputs[outputIO.index].maxAmount());
+    outputModule.nextResources.set(
+      resourceType,
+      amount.add(outputModule.nextResources.get(resourceType) || 0)
+    );
   }
 
-  updateState() {}
+  saveResource(resourceType: ResourceType, amount: DecimalSource) {
+    this.game.gameData.resources[resourceType] =
+      this.game.gameData.resources[resourceType].add(amount);
+  }
+
+  moveResources() {
+    this.resources = this.nextResources;
+    this.nextResources = new Map<IOResourceType, Decimal>();
+  }
+
+  connectInput(index: number, output: { moduleId: string; index: number }) {
+    if (output.moduleId === this.id) return;
+    const outputModule = this.game.gameData.modules.get(output.moduleId);
+    if (!outputModule) return;
+    this.disconnectInput(index);
+    outputModule.disconnectOutput(output.index);
+    this.inputs[index] = { ...output };
+    outputModule.outputs[output.index] = { moduleId: this.id, index: index };
+  }
+
+  connectOutput(index: number, input: { moduleId: string; index: number }) {
+    this.game.gameData.modules
+      .get(input.moduleId)
+      ?.connectInput(input.index, { moduleId: this.id, index: index });
+  }
+
+  disconnectInput(index: number) {
+    const input = this.inputs[index];
+    if (!input) return;
+    this.inputs[index] = undefined;
+    this.game.gameData.modules
+      .get(input.moduleId)
+      ?.disconnectOutput(input.index);
+  }
+
+  disconnectOutput(index: number) {
+    const output = this.outputs[index];
+    if (!output) return;
+    this.outputs[index] = undefined;
+    this.game.gameData.modules
+      .get(output.moduleId)
+      ?.disconnectInput(output.index);
+  }
 }
 
-export type ModuleIO = {
-  connectableResourceType: () => IOResourceType;
-  resourceType: () => IOResourceType;
-  maxAmount: () => Decimal;
-  connectedModuleIO?: {
-    moduleId: string;
-    index: number;
-  };
-};
-
-export type ModuleInput = ModuleIO & { nextAmount: Decimal; amount: Decimal };
-export type ModuleOutput = ModuleIO;
+export type ModuleIO =
+  | {
+      moduleId: string;
+      index: number;
+    }
+  | undefined;
