@@ -7,12 +7,14 @@ export const Factory: React.FC = () => {
   const [selectedModuleId, setSelectedModuleId] = useState<string>();
   return (
     <HStack h="100%" gap="0">
-      <ModuleList
+      <ModuleListView
         selectedModuleId={selectedModuleId}
         setSelectedModuleId={setSelectedModuleId}
       />
       <Divider orientation="vertical" />
-      <ModuleView
+      <ModuleInfoView moduleId={selectedModuleId} />
+      <Divider orientation="vertical" />
+      <FactoryView
         selectedModuleId={selectedModuleId}
         setSelectedModuleId={setSelectedModuleId}
       />
@@ -20,59 +22,64 @@ export const Factory: React.FC = () => {
   );
 };
 
-type ModuleListProps = {
+type ModuleListViewProps = {
   selectedModuleId?: string;
   setSelectedModuleId: React.Dispatch<React.SetStateAction<string | undefined>>;
 };
-const ModuleList: React.FC<ModuleListProps> = ({
+const ModuleListView: React.FC<ModuleListViewProps> = ({
   selectedModuleId,
   setSelectedModuleId,
 }) => {
-  const { gameData } = useGame();
-  const { connectModule, disconnectModule } = useGame();
-  const selectedModule =
-    selectedModuleId === undefined
-      ? selectedModuleId
-      : gameData.modules.get(selectedModuleId);
+  const { gameData, connectModule, disconnectModule, setPosition } = useGame();
   return (
     <VStack h="100%" minW="200px" maxW="25%">
       <Button
-        onClick={() =>
+        onClick={() => {
           connectModule(
             { moduleId: "1", index: 0 },
             { moduleId: "0", index: 0 }
-          )
-        }
+          );
+        }}
       >
-        接続
+        接続テスト
       </Button>
       <Button
         onClick={() => {
           disconnectModule({ moduleId: "1", index: 0 });
         }}
       >
-        切断
+        切断テスト
       </Button>
-      {selectedModule === undefined ? (
+      {Array.from(gameData.modules.entries()).map(([moduleId, module]) => {
+        return (
+          <VStack
+            key={"M" + moduleId}
+            onClick={() => setSelectedModuleId(moduleId)}
+            cursor="pointer"
+            backgroundColor={selectedModuleId === moduleId ? "lightpink" : ""}
+          >
+            <Text>{module.name}</Text>
+          </VStack>
+        );
+      })}
+    </VStack>
+  );
+};
+
+type ModuleInfoViewProps = {
+  moduleId?: string;
+};
+const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
+  const { gameData } = useGame();
+  const module = moduleId ? gameData.modules.get(moduleId) : undefined;
+
+  return (
+    <VStack h="100%" minW="200px" maxW="25%">
+      {module ? (
         <>
-          {Array.from(gameData.modules.entries()).map(([moduleId, module]) => {
-            return (
-              <VStack
-                key={"M" + moduleId}
-                onClick={() => setSelectedModuleId(moduleId)}
-                cursor="pointer"
-              >
-                <Text>{module.name}</Text>
-              </VStack>
-            );
-          })}
-        </>
-      ) : (
-        <>
-          <Button onClick={() => setSelectedModuleId(undefined)}>閉じる</Button>
-          <Text>{selectedModule.name}</Text>
+          <Text>{module.name}</Text>
           <Text>入力</Text>
-          {selectedModule.inputs.map((input, index) => {
+          {module.inputs.map((input, index) => {
             return input ? (
               <Text key={"I" + index}>
                 {gameData.modules.get(input.moduleId)!.name}
@@ -82,7 +89,7 @@ const ModuleList: React.FC<ModuleListProps> = ({
             );
           })}
           <Text>出力</Text>
-          {selectedModule.outputs.map((output, index) => {
+          {module.outputs.map((output, index) => {
             return output ? (
               <Text key={"O" + index}>
                 {gameData.modules.get(output.moduleId)!.name}
@@ -92,16 +99,18 @@ const ModuleList: React.FC<ModuleListProps> = ({
             );
           })}
         </>
+      ) : (
+        <>モジュールを選択するとここに詳細が表示されます</>
       )}
     </VStack>
   );
 };
 
-type ModuleViewProps = {
+type FactoryViewProps = {
   selectedModuleId?: string;
   setSelectedModuleId: React.Dispatch<React.SetStateAction<string | undefined>>;
 };
-const ModuleView: React.FC<ModuleViewProps> = ({
+const FactoryView: React.FC<FactoryViewProps> = ({
   selectedModuleId,
   setSelectedModuleId,
 }) => {
