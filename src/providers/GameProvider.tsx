@@ -32,6 +32,15 @@ type GameManager = {
       index: number;
     }
   ) => void;
+  setPosition: (
+    moduleId: string,
+    position:
+      | {
+          x: number;
+          y: number;
+        }
+      | undefined
+  ) => void;
 };
 
 const gameContext = createContext<GameManager | undefined>(undefined);
@@ -91,6 +100,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
     },
     disconnectModule: (input?, output?) => {
       gameRef.current.disconnectModule(input, output);
+    },
+    setPosition: (moduleId, position) => {
+      const module = gameRef.current.gameData.modules.get(moduleId);
+      if (module) {
+        module.position = position;
+      }
     },
   };
 
