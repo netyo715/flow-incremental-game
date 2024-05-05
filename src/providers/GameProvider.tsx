@@ -103,8 +103,15 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
     },
     setPosition: (moduleId, position) => {
       const module = gameRef.current.gameData.modules.get(moduleId);
-      if (module) {
-        module.position = position;
+      if (!module) return;
+      module.position = position;
+      if (!position) {
+        for (let i = 0; i < module.inputs.length; i++) {
+          gameRef.current.disconnectModule({ moduleId, index: i });
+        }
+        for (let i = 0; i < module.outputs.length; i++) {
+          gameRef.current.disconnectModule(undefined, { moduleId, index: i });
+        }
       }
     },
   };

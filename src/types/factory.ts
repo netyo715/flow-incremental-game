@@ -77,6 +77,7 @@ export abstract class Module {
     if (output.moduleId === this.id) return;
     const outputModule = this.game.gameData.modules.get(output.moduleId);
     if (!outputModule) return;
+    if (!this.position || !outputModule.position) return;
     this.disconnectInput(index);
     outputModule.disconnectOutput(output.index);
     this.inputs[index] = { ...output };

@@ -1,4 +1,14 @@
-import { Divider, HStack, VStack, Text, Button } from "@yamada-ui/react";
+import {
+  Divider,
+  HStack,
+  VStack,
+  Text,
+  Button,
+  Modal,
+  ModalHeader,
+  useDisclosure,
+  ModalBody,
+} from "@yamada-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "../../providers/GameProvider";
 import { FactoryViewManager } from "../../scripts/moduleView";
@@ -33,25 +43,6 @@ const ModuleListView: React.FC<ModuleListViewProps> = ({
   const { gameData, connectModule, disconnectModule, setPosition } = useGame();
   return (
     <VStack h="100%" minW="200px" maxW="25%">
-      <Button
-        onClick={() => {
-          connectModule(
-            { moduleId: "1", index: 0 },
-            { moduleId: "0", index: 0 }
-          );
-          setPosition("0", { x: 100, y: 100 });
-          setPosition("1", { x: 200, y: 200 });
-        }}
-      >
-        接続テスト
-      </Button>
-      <Button
-        onClick={() => {
-          disconnectModule({ moduleId: "1", index: 0 });
-        }}
-      >
-        切断テスト
-      </Button>
       {Array.from(gameData.modules.entries()).map(([moduleId, module]) => {
         return (
           <VStack
@@ -72,39 +63,133 @@ type ModuleInfoViewProps = {
   moduleId?: string;
 };
 const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
-  const { gameData } = useGame();
+  const { gameData, connectModule, disconnectModule, setPosition } = useGame();
   const module = moduleId ? gameData.modules.get(moduleId) : undefined;
 
+  const modalControl = useDisclosure();
+  const [isInput, setIsInput] = useState<boolean>(true);
+  const [IOIndex, setIOIndex] = useState<number>(0);
+
   return (
-    <VStack h="100%" minW="200px" maxW="25%">
-      {module ? (
-        <>
-          <Text>{module.name}</Text>
-          <Text>入力</Text>
-          {module.inputs.map((input, index) => {
-            return input ? (
-              <Text key={"I" + index}>
-                {gameData.modules.get(input.moduleId)!.name}
-              </Text>
+    <>
+      <VStack h="100%" minW="200px" maxW="25%">
+        {module ? (
+          <>
+            <Text>{module.name}</Text>
+            {module.position ? (
+              <>
+                <Button onClick={() => setPosition(moduleId!, undefined)}>
+                  取り除く
+                </Button>
+                {module.inputs.length === 0 ? (
+                  <Text>入力なし</Text>
+                ) : (
+                  <>
+                    <Text>入力</Text>
+                    {module.inputs.map((input, index) => {
+                      return (
+                        <Text
+                          key={"I" + index}
+                          onClick={() => {
+                            setIsInput(true);
+                            setIOIndex(index);
+                            modalControl.onOpen();
+                          }}
+                        >
+                          {input
+                            ? gameData.modules.get(input.moduleId)!.name
+                            : "接続先なし"}
+                        </Text>
+                      );
+                    })}
+                  </>
+                )}
+                {module.outputs.length === 0 ? (
+                  <Text>出力なし</Text>
+                ) : (
+                  <>
+                    <Text>出力</Text>
+                    {module.outputs.map((output, index) => {
+                      return (
+                        <Text
+                          key={"O" + index}
+                          onClick={() => {
+                            setIsInput(false);
+                            setIOIndex(index);
+                            modalControl.onOpen();
+                          }}
+                        >
+                          {output
+                            ? gameData.modules.get(output.moduleId)!.name
+                            : "接続先なし"}
+                        </Text>
+                      );
+                    })}
+                  </>
+                )}
+              </>
             ) : (
-              <Text>接続先なし</Text>
-            );
-          })}
-          <Text>出力</Text>
-          {module.outputs.map((output, index) => {
-            return output ? (
-              <Text key={"O" + index}>
-                {gameData.modules.get(output.moduleId)!.name}
-              </Text>
-            ) : (
-              <Text>接続先なし</Text>
-            );
-          })}
-        </>
-      ) : (
-        <>モジュールを選択するとここに詳細が表示されます</>
-      )}
-    </VStack>
+              <Button
+                onClick={() => {
+                  setPosition(moduleId!, { x: 256, y: 256 });
+                }}
+              >
+                配置する
+              </Button>
+            )}
+          </>
+        ) : (
+          <>モジュールを選択するとここに詳細が表示されます</>
+        )}
+      </VStack>
+      <Modal isOpen={modalControl.isOpen} onClose={modalControl.onClose}>
+        <ModalHeader>{isInput ? "入力" : "出力"}先を選択</ModalHeader>
+        <ModalBody>
+          {Array.from(gameData.modules.entries()).map(
+            ([modalModuleId, modalModule]) => {
+              const IOs = isInput ? modalModule.outputs : modalModule.inputs;
+              return IOs.map((_, index) => {
+                return (
+                  <Text
+                    onClick={() => {
+                      if (isInput) {
+                        connectModule(
+                          { moduleId: module!.id, index: IOIndex },
+                          { moduleId: modalModuleId, index: index }
+                        );
+                      } else {
+                        connectModule(
+                          { moduleId: modalModuleId, index: index },
+                          { moduleId: module!.id, index: IOIndex }
+                        );
+                      }
+                      modalControl.onClose();
+                    }}
+                  >
+                    {modalModule.name}:{index + 1}
+                  </Text>
+                );
+              });
+            }
+          )}
+          <Button
+            onClick={() => {
+              if (isInput) {
+                disconnectModule({ moduleId: module!.id, index: IOIndex });
+              } else {
+                disconnectModule(undefined, {
+                  moduleId: module!.id,
+                  index: IOIndex,
+                });
+              }
+              modalControl.onClose();
+            }}
+          >
+            切断する
+          </Button>
+        </ModalBody>
+      </Modal>
+    </>
   );
 };
 
