@@ -1,7 +1,7 @@
 import { Divider, HStack, VStack, Text, Button } from "@yamada-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "../../providers/GameProvider";
-import { drawModuleView } from "../../scripts/moduleView";
+import { FactoryViewManager } from "../../scripts/moduleView";
 
 export const Factory: React.FC = () => {
   const [selectedModuleId, setSelectedModuleId] = useState<string>();
@@ -39,6 +39,8 @@ const ModuleListView: React.FC<ModuleListViewProps> = ({
             { moduleId: "1", index: 0 },
             { moduleId: "0", index: 0 }
           );
+          setPosition("0", { x: 100, y: 100 });
+          setPosition("1", { x: 200, y: 200 });
         }}
       >
         接続テスト
@@ -114,18 +116,21 @@ const FactoryView: React.FC<FactoryViewProps> = ({
   selectedModuleId,
   setSelectedModuleId,
 }) => {
-  const { gameData } = useGame();
-  const canvasContextRef = useRef<CanvasRenderingContext2D>();
+  const { gameData, setPosition } = useGame();
+  const factoryViewManagerRef = useRef<FactoryViewManager>();
 
   useEffect(() => {
-    if (!canvasContextRef.current) {
-      const canvas = document.getElementById("moduleView") as HTMLCanvasElement;
-      canvasContextRef.current = canvas.getContext(
-        "2d"
-      ) as CanvasRenderingContext2D;
+    if (!factoryViewManagerRef.current) {
+      factoryViewManagerRef.current = new FactoryViewManager(
+        document.getElementById("moduleView") as HTMLCanvasElement,
+        setSelectedModuleId,
+        setPosition
+      );
     }
-    const context = canvasContextRef.current;
-    drawModuleView(context, gameData.modules, selectedModuleId);
+    factoryViewManagerRef.current.drawFactory(
+      gameData.modules,
+      selectedModuleId
+    );
   });
 
   return (
