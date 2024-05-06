@@ -1,5 +1,5 @@
 import Decimal from "break_infinity.js";
-import { Module, ResourceType } from "./factory";
+import { Module, ModuleType, ResourceType } from "./factory";
 import { ModuleLevels } from "../scripts/parameters/modules";
 
 export type GameData = {
@@ -32,4 +32,8 @@ export type GameOperation =
         moduleId: string;
         index: number;
       };
+    }
+  | {
+      type: "levelUp";
+      moduleType: ModuleType;
     };

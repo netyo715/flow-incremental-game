@@ -6,6 +6,10 @@ export const ResourceType = {
 };
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];
 
+export const resourceTypeNames: Record<ResourceType, string> = {
+  Rock: "石",
+};
+
 export const IOResourceType = {
   Rock: "Rock",
 };
@@ -18,6 +22,12 @@ export const ModuleType = {
   Splitter: "Splitter",
 };
 export type ModuleType = (typeof ModuleType)[keyof typeof ModuleType];
+
+export const moduleTypes = [
+  ModuleType.RockGenerator,
+  ModuleType.RockReceiver,
+  ModuleType.Splitter,
+];
 
 export abstract class Module {
   game: Game;

@@ -1,8 +1,13 @@
 import Decimal from "break_infinity.js";
 import { GameData, GameOperation } from "../types/game";
-import { Module } from "../types/factory";
+import { Module, ModuleType } from "../types/factory";
 import { GAME_INTERVAL } from "../define";
-import { RockGenerator, RockReceiver } from "./parameters/modules";
+import {
+  moduleLevelUpCosts,
+  RockGenerator,
+  RockReceiver,
+  Splitter,
+} from "./parameters/modules";
 
 export class Game {
   gameData: GameData;
@@ -36,16 +41,29 @@ export class Game {
       const operation = this.operationQueue.shift()!;
       switch (operation.type) {
         case "connectModule":
-          this.connectModule(operation.input, operation.output);
+          this._connectModule(operation.input, operation.output);
           break;
         case "disconnectModule":
-          this.disconnectModule(operation.input, operation.output);
+          this._disconnectModule(operation.input, operation.output);
+          break;
+        case "levelUp":
+          this._levelUp(operation.moduleType);
           break;
       }
     }
   }
 
   connectModule(
+    input: { moduleId: string; index: number },
+    output: { moduleId: string; index: number }
+  ) {
+    this.operationQueue.push({
+      type: "connectModule",
+      input,
+      output,
+    });
+  }
+  _connectModule(
     input: { moduleId: string; index: number },
     output: { moduleId: string; index: number }
   ) {
@@ -58,6 +76,16 @@ export class Game {
     input?: { moduleId: string; index: number },
     output?: { moduleId: string; index: number }
   ) {
+    this.operationQueue.push({
+      type: "disconnectModule",
+      input,
+      output,
+    });
+  }
+  _disconnectModule(
+    input?: { moduleId: string; index: number },
+    output?: { moduleId: string; index: number }
+  ) {
     if (input) {
       this.gameData.modules.get(input.moduleId)?.disconnectInput(input.index);
     }
@@ -66,6 +94,26 @@ export class Game {
         .get(output.moduleId)
         ?.disconnectOutput(output.index);
     }
+  }
+
+  levelUp(moduleType: ModuleType) {
+    this.operationQueue.push({
+      type: "levelUp",
+      moduleType,
+    });
+  }
+  _levelUp(moduleType: ModuleType) {
+    const cost = moduleLevelUpCosts(
+      moduleType,
+      this.gameData.moduleLevels[moduleType]
+    );
+    if (this.gameData.resources[cost.resourceType].lt(cost.level)) {
+      return;
+    }
+    this.gameData.resources[cost.resourceType] = this.gameData.resources[
+      cost.resourceType
+    ].minus(cost.level);
+    this.gameData.moduleLevels[moduleType]++;
   }
 
   generateId() {
@@ -87,6 +135,7 @@ export const initialGameData = (game: Game): GameData => {
     moduleLevels: {
       RockGenerator: 0,
       RockReceiver: 0,
+      Splitter: 0,
     },
     achievementsUnlocked: [],
     elapsedTime: 0,

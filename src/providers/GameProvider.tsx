@@ -9,6 +9,7 @@ import {
 import { GAME_INTERVAL } from "../define";
 import { Game } from "../scripts/game";
 import { GameData } from "../types/game";
+import { ModuleType } from "../types/factory";
 
 type GameManager = {
   readonly gameData: GameData;
@@ -41,6 +42,7 @@ type GameManager = {
         }
       | undefined
   ) => void;
+  levelUp: (moduleType: ModuleType) => void;
 };
 
 const gameContext = createContext<GameManager | undefined>(undefined);
@@ -113,6 +115,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
           gameRef.current.disconnectModule(undefined, { moduleId, index: i });
         }
       }
+    },
+    levelUp: (moduleType) => {
+      gameRef.current.levelUp(moduleType);
     },
   };
 
