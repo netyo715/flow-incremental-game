@@ -3,7 +3,7 @@ import { Game } from "../scripts/game";
 
 export const ResourceType = {
   Rock: "Rock",
-};
+} as const;
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];
 
 export const resourceTypeNames: Record<ResourceType, string> = {
@@ -12,7 +12,7 @@ export const resourceTypeNames: Record<ResourceType, string> = {
 
 export const IOResourceType = {
   Rock: "Rock",
-};
+} as const;
 export type IOResourceType =
   (typeof IOResourceType)[keyof typeof IOResourceType];
 
@@ -20,7 +20,7 @@ export const ModuleType = {
   RockGenerator: "RockGenerator",
   RockReceiver: "RockReceiver",
   Splitter: "Splitter",
-};
+} as const;
 export type ModuleType = (typeof ModuleType)[keyof typeof ModuleType];
 
 export const moduleTypes = [
