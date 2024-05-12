@@ -6,6 +6,7 @@ import {
   moduleLevelUpCosts,
   RockGenerator,
   RockReceiver,
+  Splitter,
 } from "./parameters/modules";
 
 export class Game {
@@ -44,6 +45,9 @@ export class Game {
           break;
         case "disconnectModule":
           this._disconnectModule(operation.input, operation.output);
+          break;
+        case "addModule":
+          this._addModule(operation.moduleType);
           break;
         case "levelUp":
           this._levelUp(operation.moduleType);
@@ -95,6 +99,14 @@ export class Game {
     }
   }
 
+  addModule(moduleType: ModuleType) {
+    this.operationQueue.push({ type: "addModule", moduleType: moduleType });
+  }
+  _addModule(moduleType: ModuleType) {
+    const module = this.getModuleFromType(moduleType);
+    this.gameData.modules.set(module.id, module);
+  }
+
   levelUp(moduleType: ModuleType) {
     this.operationQueue.push({
       type: "levelUp",
@@ -122,6 +134,17 @@ export class Game {
       }
     }
   }
+
+  getModuleFromType = (moduleType: ModuleType): Module => {
+    switch (moduleType) {
+      case ModuleType.RockGenerator:
+        return new RockGenerator(this, this.generateId());
+      case ModuleType.RockReceiver:
+        return new RockReceiver(this, this.generateId());
+      case ModuleType.Splitter:
+        return new Splitter(this, this.generateId());
+    }
+  };
 }
 
 export const initialGameData = (game: Game): GameData => {

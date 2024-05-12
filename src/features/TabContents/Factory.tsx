@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "../../providers/GameProvider";
 import { FactoryViewManager } from "../../scripts/moduleView";
+import { ModuleType } from "../../types/factory";
 
 export const Factory: React.FC = () => {
   const [selectedModuleId, setSelectedModuleId] = useState<string>();

@@ -34,6 +34,10 @@ export type GameOperation =
       };
     }
   | {
+      type: "addModule";
+      moduleType: ModuleType;
+    }
+  | {
       type: "levelUp";
       moduleType: ModuleType;
     };
