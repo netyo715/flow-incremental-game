@@ -145,8 +145,11 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
       <Modal isOpen={modalControl.isOpen} onClose={modalControl.onClose}>
         <ModalHeader>{isInput ? "入力" : "出力"}先を選択</ModalHeader>
         <ModalBody>
-          {Array.from(gameData.modules.entries()).map(
-            ([modalModuleId, modalModule]) => {
+          {Array.from(gameData.modules.entries())
+            .filter(([_, modalModule]) => {
+              return modalModule.position !== undefined;
+            })
+            .map(([modalModuleId, modalModule]) => {
               const IOs = isInput ? modalModule.outputs : modalModule.inputs;
               return IOs.map((_, index) => {
                 return (
@@ -170,8 +173,7 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
                   </Text>
                 );
               });
-            }
-          )}
+            })}
           <Button
             onClick={() => {
               if (isInput) {

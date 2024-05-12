@@ -6,7 +6,6 @@ import {
   moduleLevelUpCosts,
   RockGenerator,
   RockReceiver,
-  Splitter,
 } from "./parameters/modules";
 
 export class Game {
