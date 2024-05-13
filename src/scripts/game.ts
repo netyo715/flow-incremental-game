@@ -2,12 +2,7 @@ import Decimal from "break_infinity.js";
 import { GameData, GameOperation } from "../types/game";
 import { Module, ModuleType } from "../types/factory";
 import { GAME_INTERVAL } from "../define";
-import {
-  moduleLevelUpCosts,
-  RockGenerator,
-  RockReceiver,
-  Splitter,
-} from "./parameters/modules";
+import { RockGenerator, RockReceiver, Splitter } from "./parameters/modules";
 
 export class Game {
   gameData: GameData;
@@ -48,9 +43,6 @@ export class Game {
           break;
         case "addModule":
           this._addModule(operation.moduleType);
-          break;
-        case "levelUp":
-          this._levelUp(operation.moduleType);
           break;
       }
     }
@@ -105,26 +97,6 @@ export class Game {
   _addModule(moduleType: ModuleType) {
     const module = this.getModuleFromType(moduleType);
     this.gameData.modules.set(module.id, module);
-  }
-
-  levelUp(moduleType: ModuleType) {
-    this.operationQueue.push({
-      type: "levelUp",
-      moduleType,
-    });
-  }
-  _levelUp(moduleType: ModuleType) {
-    const cost = moduleLevelUpCosts(
-      moduleType,
-      this.gameData.moduleLevels[moduleType]
-    );
-    if (this.gameData.resources[cost.resourceType].lt(cost.level)) {
-      return;
-    }
-    this.gameData.resources[cost.resourceType] = this.gameData.resources[
-      cost.resourceType
-    ].minus(cost.level);
-    this.gameData.moduleLevels[moduleType]++;
   }
 
   generateId() {

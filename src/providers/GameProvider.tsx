@@ -43,7 +43,6 @@ type GameManager = {
         }
       | undefined
   ) => void;
-  levelUp: (moduleType: ModuleType) => void;
 };
 
 const gameContext = createContext<GameManager | undefined>(undefined);
@@ -119,9 +118,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
           gameRef.current.disconnectModule(undefined, { moduleId, index: i });
         }
       }
-    },
-    levelUp: (moduleType) => {
-      gameRef.current.levelUp(moduleType);
     },
   };
 

@@ -14,7 +14,7 @@ export class RockGenerator extends Module {
     super(game, id, 0, 1);
   }
   action() {
-    this.outputResource(0, IOResourceType.Rock, new Decimal(this.level() + 1));
+    this.outputResource(0, IOResourceType.Rock, new Decimal(1));
   }
 }
 
@@ -54,22 +54,6 @@ export class Splitter extends Module {
     });
   }
 }
-
-export const moduleLevelUpCosts = (
-  moduleType: ModuleType,
-  currentLevel: number
-) => {
-  switch (moduleType) {
-    case ModuleType.RockGenerator:
-      return { resourceType: ResourceType.Rock, level: currentLevel + 1 };
-    case ModuleType.RockReceiver:
-      return { resourceType: ResourceType.Rock, level: currentLevel + 1 };
-    case ModuleType.Splitter:
-      return { resourceType: ResourceType.Rock, level: currentLevel + 1 };
-    default:
-      throw Error;
-  }
-};
 
 export const moduleNames: Record<ModuleType, string> = {
   RockGenerator: "生産器(石)",
