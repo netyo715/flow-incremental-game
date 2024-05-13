@@ -131,6 +131,7 @@ export const initialGameData = (game: Game): GameData => {
       RockReceiver: 0,
       Splitter: 0,
     },
+    upgradesUnlocked: [],
     achievementsUnlocked: [],
     elapsedTime: 0,
   };

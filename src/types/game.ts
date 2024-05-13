@@ -6,7 +6,8 @@ export type GameData = {
   resources: { [key in ResourceType]: Decimal };
   modules: Map<string, Module>;
   moduleLevels: ModuleLevels;
-  achievementsUnlocked: (0 | 1)[];
+  upgradesUnlocked: boolean[];
+  achievementsUnlocked: boolean[];
   elapsedTime: number;
 };
 
