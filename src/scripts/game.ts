@@ -1,9 +1,10 @@
 import Decimal from "break_infinity.js";
 import { GameData, GameOperation } from "../types/game";
-import { Module, ModuleType } from "../types/factory";
+import { Module, ModuleType, ResourceType } from "../types/factory";
 import { GAME_INTERVAL } from "../define";
 import { RockGenerator, RockReceiver, Splitter } from "./parameters/modules";
 import { UPGRADES } from "./parameters/upgrades";
+import { ACHIEVEMENTS } from "./parameters/achievements";
 
 export class Game {
   gameData: GameData;
@@ -16,7 +17,7 @@ export class Game {
   tick() {
     this.applyOperation();
     this.modulesAction();
-    // TODO 実績などの処理
+    this.unlockAchievements();
 
     /* 固定FPSなのでかなり正確な計測ができるが、
     このクラスの中で固定FPSなのを保証していないのでなんとなく微妙だ */
@@ -48,6 +49,12 @@ export class Game {
         case "unlockUpgrade":
           this._unlockUpgrade(operation.upgradeIndex);
       }
+    }
+  }
+
+  unlockAchievements() {
+    if (this.gameData.resources[ResourceType.Rock].gte(10000)) {
+      this.gameData.achievementsUnlocked[0] = true;
     }
   }
 
@@ -152,8 +159,8 @@ export const initialGameData = (game: Game): GameData => {
       RockReceiver: 0,
       Splitter: 0,
     },
-    upgradesUnlocked: [false],
-    achievementsUnlocked: [],
+    upgradesUnlocked: new Array(UPGRADES.length).fill(false),
+    achievementsUnlocked: new Array(ACHIEVEMENTS.length).fill(false),
     elapsedTime: 0,
   };
 };
