@@ -41,4 +41,8 @@ export type GameOperation =
   | {
       type: "levelUp";
       moduleType: ModuleType;
+    }
+  | {
+      type: "unlockUpgrade";
+      upgradeIndex: number;
     };

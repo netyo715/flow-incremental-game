@@ -14,7 +14,11 @@ export class RockGenerator extends Module {
     super(game, id, 0, 1);
   }
   action() {
-    this.outputResource(0, IOResourceType.Rock, new Decimal(1));
+    let amount = new Decimal(1);
+    if (this.game.gameData.upgradesUnlocked[0]) {
+      amount = amount.times(2);
+    }
+    this.outputResource(0, IOResourceType.Rock, amount);
   }
 }
 

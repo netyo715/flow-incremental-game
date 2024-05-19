@@ -3,6 +3,7 @@ import { GameData, GameOperation } from "../types/game";
 import { Module, ModuleType } from "../types/factory";
 import { GAME_INTERVAL } from "../define";
 import { RockGenerator, RockReceiver, Splitter } from "./parameters/modules";
+import { UPGRADES } from "./parameters/upgrades";
 
 export class Game {
   gameData: GameData;
@@ -44,6 +45,8 @@ export class Game {
         case "addModule":
           this._addModule(operation.moduleType);
           break;
+        case "unlockUpgrade":
+          this._unlockUpgrade(operation.upgradeIndex);
       }
     }
   }
@@ -99,6 +102,24 @@ export class Game {
     this.gameData.modules.set(module.id, module);
   }
 
+  unlockUpgrade(upgradeIndex: number) {
+    this.operationQueue.push({ type: "unlockUpgrade", upgradeIndex });
+  }
+  _unlockUpgrade(upgradeIndex: number) {
+    if (this.gameData.upgradesUnlocked[upgradeIndex]) return;
+    for (const cost of UPGRADES[upgradeIndex].costs) {
+      if (this.gameData.resources[cost.resourceType].lessThan(cost.amount)) {
+        return;
+      }
+    }
+    for (const cost of UPGRADES[upgradeIndex].costs) {
+      this.gameData.resources[cost.resourceType] = this.gameData.resources[
+        cost.resourceType
+      ].sub(cost.amount);
+    }
+    this.gameData.upgradesUnlocked[upgradeIndex] = true;
+  }
+
   generateId() {
     for (let i = 0; true; i++) {
       if (!this.gameData.modules.has(i.toString())) {
@@ -131,7 +152,7 @@ export const initialGameData = (game: Game): GameData => {
       RockReceiver: 0,
       Splitter: 0,
     },
-    upgradesUnlocked: [],
+    upgradesUnlocked: [false],
     achievementsUnlocked: [],
     elapsedTime: 0,
   };

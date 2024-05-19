@@ -34,6 +34,7 @@ type GameManager = {
     }
   ) => void;
   addModule: (moduleType: ModuleType) => void;
+  unlockUpgrade: (upgradeIndex: number) => void;
   setPosition: (
     moduleId: string,
     position:
@@ -105,6 +106,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({
     },
     addModule: (moduleType: ModuleType) => {
       gameRef.current.addModule(moduleType);
+    },
+    unlockUpgrade: (upgradeIndex: number) => {
+      gameRef.current.unlockUpgrade(upgradeIndex);
     },
     setPosition: (moduleId, position) => {
       const module = gameRef.current.gameData.modules.get(moduleId);
