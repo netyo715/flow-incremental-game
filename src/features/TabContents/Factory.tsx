@@ -8,6 +8,8 @@ import {
   ModalHeader,
   useDisclosure,
   ModalBody,
+  Card,
+  Heading,
 } from "@yamada-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "../../providers/GameProvider";
@@ -43,16 +45,18 @@ const ModuleListView: React.FC<ModuleListViewProps> = ({
 }) => {
   const { gameData, connectModule, disconnectModule, setPosition } = useGame();
   return (
-    <VStack h="100%" minW="200px" maxW="25%">
+    <VStack h="100%" minW="200px" maxW="25%" gap="0" p="sm">
+      <Heading fontSize="2xl">モジュール一覧</Heading>
       {Array.from(gameData.modules.entries()).map(([moduleId, module]) => {
         return (
           <VStack
             key={"M" + moduleId}
             onClick={() => setSelectedModuleId(moduleId)}
             cursor="pointer"
-            backgroundColor={selectedModuleId === moduleId ? "lightpink" : ""}
+            p="sm"
+            backgroundColor={selectedModuleId === moduleId ? "cyan.100" : ""}
           >
-            <Text>{module.name}</Text>
+            <Text fontSize="xl">{module.name}</Text>
           </VStack>
         );
       })}
@@ -73,20 +77,18 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
 
   return (
     <>
-      <VStack h="100%" minW="200px" maxW="25%">
+      <VStack h="100%" minW="200px" maxW="25%" p="sm">
         {module ? (
           <>
-            <Text>{module.name}</Text>
+            <Heading fontSize="2xl">{module.name}</Heading>
             {module.position ? (
               <>
                 <Button onClick={() => setPosition(moduleId!, undefined)}>
                   取り除く
                 </Button>
-                {module.inputs.length === 0 ? (
-                  <Text>入力なし</Text>
-                ) : (
+                {module.inputs.length > 0 ? (
                   <>
-                    <Text>入力</Text>
+                    <Heading fontSize="xl">入力</Heading>
                     {module.inputs.map((input, index) => {
                       return (
                         <Text
@@ -96,20 +98,23 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
                             setIOIndex(index);
                             modalControl.onOpen();
                           }}
+                          cursor="pointer"
                         >
                           {input
-                            ? gameData.modules.get(input.moduleId)!.name
+                            ? `${
+                                gameData.modules.get(input.moduleId)!.name
+                              } - ${input.index + 1}`
                             : "接続先なし"}
                         </Text>
                       );
                     })}
                   </>
-                )}
-                {module.outputs.length === 0 ? (
-                  <Text>出力なし</Text>
                 ) : (
+                  ""
+                )}
+                {module.outputs.length > 0 ? (
                   <>
-                    <Text>出力</Text>
+                    <Heading fontSize="xl">出力</Heading>
                     {module.outputs.map((output, index) => {
                       return (
                         <Text
@@ -119,14 +124,19 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
                             setIOIndex(index);
                             modalControl.onOpen();
                           }}
+                          cursor="pointer"
                         >
                           {output
-                            ? gameData.modules.get(output.moduleId)!.name
+                            ? `${
+                                gameData.modules.get(output.moduleId)!.name
+                              } - ${output.index + 1}`
                             : "接続先なし"}
                         </Text>
                       );
                     })}
                   </>
+                ) : (
+                  ""
                 )}
               </>
             ) : (
@@ -146,6 +156,22 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
       <Modal isOpen={modalControl.isOpen} onClose={modalControl.onClose}>
         <ModalHeader>{isInput ? "入力" : "出力"}先を選択</ModalHeader>
         <ModalBody>
+          <Text
+            cursor="pointer"
+            onClick={() => {
+              if (isInput) {
+                disconnectModule({ moduleId: module!.id, index: IOIndex });
+              } else {
+                disconnectModule(undefined, {
+                  moduleId: module!.id,
+                  index: IOIndex,
+                });
+              }
+              modalControl.onClose();
+            }}
+          >
+            切断する
+          </Text>
           {Array.from(gameData.modules.entries())
             .filter(([_, modalModule]) => {
               return modalModule.position !== undefined;
@@ -155,6 +181,7 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
               return IOs.map((_, index) => {
                 return (
                   <Text
+                    cursor="pointer"
                     onClick={() => {
                       if (isInput) {
                         connectModule(
@@ -170,26 +197,11 @@ const ModuleInfoView: React.FC<ModuleInfoViewProps> = ({ moduleId }) => {
                       modalControl.onClose();
                     }}
                   >
-                    {modalModule.name}:{index + 1}
+                    {modalModule.name} - {index + 1}
                   </Text>
                 );
               });
             })}
-          <Button
-            onClick={() => {
-              if (isInput) {
-                disconnectModule({ moduleId: module!.id, index: IOIndex });
-              } else {
-                disconnectModule(undefined, {
-                  moduleId: module!.id,
-                  index: IOIndex,
-                });
-              }
-              modalControl.onClose();
-            }}
-          >
-            切断する
-          </Button>
         </ModalBody>
       </Modal>
     </>
