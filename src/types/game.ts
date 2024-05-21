@@ -1,11 +1,25 @@
 import Decimal from "break_infinity.js";
-import { Module, ModuleType, ResourceType } from "./factory";
+import { Module, ModuleIO, ModuleType, ResourceType } from "./factory";
 import { ModuleLevels } from "../scripts/parameters/modules";
 
 export type GameData = {
   resources: { [key in ResourceType]: Decimal };
   modules: Map<string, Module>;
-  moduleLevels: ModuleLevels;
+  upgradesUnlocked: boolean[];
+  achievementsUnlocked: boolean[];
+  elapsedTime: number;
+};
+
+export type StorageGameData = {
+  resources: { [key in ResourceType]: string };
+  modules: {
+    [key in string]: {
+      moduleType: ModuleType;
+      inputs: ModuleIO[];
+      outputs: ModuleIO[];
+      position?: { x: number; y: number };
+    };
+  };
   upgradesUnlocked: boolean[];
   achievementsUnlocked: boolean[];
   elapsedTime: number;

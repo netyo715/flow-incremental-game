@@ -54,10 +54,6 @@ export abstract class Module {
     }
   }
 
-  level(): number {
-    return this.game.gameData.moduleLevels[this.moduleType];
-  }
-
   outputResource(index: number, resourceType: IOResourceType, amount: Decimal) {
     const outputIO = this.outputs[index];
     if (!outputIO) {

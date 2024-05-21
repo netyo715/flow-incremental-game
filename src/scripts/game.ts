@@ -1,7 +1,11 @@
 import Decimal from "break_infinity.js";
-import { GameData, GameOperation } from "../types/game";
+import { GameData, GameOperation, StorageGameData } from "../types/game";
 import { Module, ModuleType, ResourceType } from "../types/factory";
-import { GAME_INTERVAL } from "../define";
+import {
+  GAME_INTERVAL,
+  SAVE_TICK_COUNT,
+  STORAGE_KEY_GAME_DATA,
+} from "../define";
 import { RockGenerator, RockReceiver, Splitter } from "./parameters/modules";
 import { UPGRADES } from "./parameters/upgrades";
 import { ACHIEVEMENTS } from "./parameters/achievements";
@@ -9,9 +13,10 @@ import { ACHIEVEMENTS } from "./parameters/achievements";
 export class Game {
   gameData: GameData;
   operationQueue: GameOperation[] = [];
+  private tickCount = 0;
 
-  constructor(gameData?: GameData) {
-    this.gameData = gameData ? gameData : initialGameData(this);
+  constructor() {
+    this.gameData = this.getGameDataFromStorage();
   }
 
   tick() {
@@ -22,6 +27,12 @@ export class Game {
     /* 固定FPSなのでかなり正確な計測ができるが、
     このクラスの中で固定FPSなのを保証していないのでなんとなく微妙だ */
     this.gameData.elapsedTime += GAME_INTERVAL;
+
+    this.tickCount++;
+    if (this.tickCount == SAVE_TICK_COUNT) {
+      this.saveGameDataToStorage();
+      this.tickCount = 0;
+    }
   }
 
   modulesAction() {
@@ -105,7 +116,7 @@ export class Game {
     this.operationQueue.push({ type: "addModule", moduleType: moduleType });
   }
   _addModule(moduleType: ModuleType) {
-    const module = this.getModuleFromType(moduleType);
+    const module = this.getNewModuleFromType(moduleType);
     this.gameData.modules.set(module.id, module);
   }
 
@@ -135,16 +146,80 @@ export class Game {
     }
   }
 
-  getModuleFromType = (moduleType: ModuleType): Module => {
+  getNewModuleFromType = (moduleType: ModuleType, id?: string): Module => {
+    const constId = id || this.generateId();
     switch (moduleType) {
       case ModuleType.RockGenerator:
-        return new RockGenerator(this, this.generateId());
+        return new RockGenerator(this, constId);
       case ModuleType.RockReceiver:
-        return new RockReceiver(this, this.generateId());
+        return new RockReceiver(this, constId);
       case ModuleType.Splitter:
-        return new Splitter(this, this.generateId());
+        return new Splitter(this, constId);
     }
   };
+
+  saveGameDataToStorage() {
+    const resources = Object.fromEntries(
+      Object.entries(this.gameData.resources).map(([key, value]) => [
+        key,
+        value.toString(),
+      ])
+    ) as StorageGameData["resources"];
+
+    const modules = Object.fromEntries(
+      Array.from(this.gameData.modules.entries()).map(([key, value]) => [
+        key,
+        {
+          moduleType: value.moduleType,
+          inputs: value.inputs,
+          outputs: value.outputs,
+          position: value.position,
+        },
+      ])
+    ) as StorageGameData["modules"];
+
+    const data: StorageGameData = {
+      resources,
+      modules,
+      upgradesUnlocked: this.gameData.upgradesUnlocked,
+      achievementsUnlocked: this.gameData.achievementsUnlocked,
+      elapsedTime: this.gameData.elapsedTime,
+    };
+    localStorage.setItem(STORAGE_KEY_GAME_DATA, JSON.stringify(data));
+  }
+
+  getGameDataFromStorage(): GameData {
+    const dataString = localStorage.getItem(STORAGE_KEY_GAME_DATA);
+    if (!dataString) {
+      return initialGameData(this);
+    }
+    const data: StorageGameData = JSON.parse(dataString);
+
+    const resources = Object.fromEntries(
+      Object.entries(data.resources).map(([key, value]) => [
+        key,
+        new Decimal(value),
+      ])
+    ) as GameData["resources"];
+
+    const modules = new Map(
+      Object.entries(data.modules).map(([key, value]) => {
+        let module = this.getNewModuleFromType(value.moduleType, key);
+        module.inputs = value.inputs;
+        module.outputs = value.outputs;
+        module.position = value.position;
+        return [key, module];
+      })
+    ) as GameData["modules"];
+
+    return {
+      resources,
+      modules,
+      upgradesUnlocked: data.upgradesUnlocked,
+      achievementsUnlocked: data.achievementsUnlocked,
+      elapsedTime: data.elapsedTime,
+    };
+  }
 }
 
 export const initialGameData = (game: Game): GameData => {
@@ -154,11 +229,6 @@ export const initialGameData = (game: Game): GameData => {
       ["0", new RockGenerator(game, "0")],
       ["1", new RockReceiver(game, "1")],
     ]),
-    moduleLevels: {
-      RockGenerator: 0,
-      RockReceiver: 0,
-      Splitter: 0,
-    },
     upgradesUnlocked: new Array(UPGRADES.length).fill(false),
     achievementsUnlocked: new Array(ACHIEVEMENTS.length).fill(false),
     elapsedTime: 0,
